@@ -7,14 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        coq_version:
+        coq_image:
           - '8.15'
-        ocaml_version:
-          - '4.07-flambda'
     steps:
       - uses: actions/checkout@v2
       - uses: coq-community/docker-coq-action@v1
         with:
           opam_file: 'lc-self-interpreter.opam'
-          coq_version: ${{ matrix.coq_version }}
-          ocaml_version: ${{ matrix.ocaml_version }}
+          custom_image: coqorg/coq:${{ matrix.coq_image }}
