@@ -37,36 +37,17 @@ Lemma TRUE_reds {n} : forall M N : Term n,
   reds (App (App TRUE M) N) M.
 Proof.
   intros M N.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite avoid_refl.
-  eapply R_star.
-  { apply beta_red. }
-  rewrite subst_weaken.
-  apply star_refl.
+  unfold TRUE.
+  normal_order.
 Qed.
-
-#[global]
-Opaque TRUE.
 
 Lemma FALSE_reds {n} : forall M N : Term n,
   reds (App (App FALSE M) N) N.
 Proof.
   intros M N.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  eapply R_star.
-  { apply beta_red. }
-  simpl.
-  rewrite avoid_refl.
-  apply star_refl.
+  unfold FALSE.
+  normal_order.
 Qed.
 
 #[global]
-Opaque FALSE.
+Opaque TRUE FALSE.

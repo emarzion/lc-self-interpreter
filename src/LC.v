@@ -162,3 +162,36 @@ Proof.
   rewrite <- (weaken_const _ i).
   now rewrite subst_weaken.
 Qed.
+
+Ltac beta :=
+  match goal with
+  | [ |- red (Lam _ # _) _ ] =>
+    apply beta_red;
+    simpl
+  | [ |- red (Lam _) _ ] =>
+    apply lam_red;
+    beta
+  | [ |- red (_ # _) _ ] =>
+    first
+    [ apply app_red_l; beta
+    | apply app_red_r; beta
+    ]
+  | _ => fail
+  end.
+
+Ltac normal_order :=
+  match goal with
+  | [ |- reds _ _ ] => unfold reds; normal_order
+  | [ |- star red _ _ ] => apply star_refl
+  | [ |- context [ avoid ?t ?t ] ] =>
+      rewrite avoid_refl; normal_order
+  | [ |- star red _ _ ] =>
+      eapply R_star;
+      [ beta
+      | simpl;
+        repeat rewrite subst_const;
+        repeat rewrite weaken_const;
+        repeat rewrite subst_weaken
+      ]; normal_order
+  | _ => idtac
+  end.
