@@ -12,25 +12,8 @@ Definition S_COMB {n} : Term n :=
 Definition S_COMB_reds {n} (M N P : Term n) :
   reds (S_COMB # M # N # P) (M # P # (N # P)).
 Proof.
-  eapply R_star.
-  { do 2 apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite avoid_refl.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite avoid_refl.
-  rewrite subst_weaken.
-  eapply R_star.
-  { apply beta_red. }
-  simpl.
-  rewrite avoid_refl.
-  repeat rewrite subst_weaken.
-  apply star_refl.
+  unfold S_COMB.
+  normal_order.
 Qed.
 
 #[export]
@@ -57,18 +40,8 @@ Lemma FLIP_CURRY_reds {n} (F E : Term n ) :
       # (PAIR # var 0
          # weaken E (inl tt)))).
 Proof.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  eapply R_star.
-  { apply beta_red. }
-  simpl.
-  rewrite avoid_refl.
-  rewrite subst_weaken.
-  repeat rewrite subst_const.
-  apply star_refl.
+  unfold FLIP_CURRY.
+  normal_order.
 Qed.
 
 #[global]

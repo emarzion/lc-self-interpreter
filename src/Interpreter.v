@@ -44,7 +44,7 @@ Definition EVAL_WITHOUT_ENV {n} : Term n :=
   Lam (var 0 # LOOKUP # S_COMB # FLIP_CURRY).
 
 #[export]
-Instance EVAL_WITHOUT_ENV_Const : Const (@NIL).
+Instance EVAL_WITHOUT_ENV_Const : Const (@EVAL_WITHOUT_ENV).
 Proof.
   constructor; reflexivity.
 Qed.
@@ -108,92 +108,29 @@ Proof.
   }
 Qed.
 
-Lemma LOOKUP_0_reds {n} (T : Term n) :
-  reds (LOOKUP # cnum 0 # T) (FST # T).
-Proof.
-  Transparent cnum.
-  Opaque FST.
-  unfold cnum; simpl.
-  unfold LOOKUP.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite avoid_refl.
-  eapply R_star.
-  { do 2 apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite avoid_refl.
-  rewrite subst_const.
-  apply star_refl.
-  Transparent FST.
-  Opaque cnum.
-Qed.
-
 Lemma LOOKUP_reds {n m} (ts : Vec (Term n) m) (i : Fin m) :
   reds (LOOKUP # cnum (nat_of_Fin i) # tup ts) (vlookup i ts).
 Proof.
   unfold LOOKUP.
   Opaque FST.
   Opaque SND.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
+  normal_order.
+  eapply star_trans.
+  { apply app_reds_l.
+    apply cnum_reds.
   }
-  simpl.
-  rewrite avoid_refl.
-  repeat rewrite subst_const.
-  Transparent cnum.
-  unfold cnum.
-  eapply R_star.
-  { do 2 apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  repeat rewrite weaken_const.
-  eapply R_star.
-  { apply app_red_l. apply beta_red. }
-  simpl.
   induction m.
   { destruct i. }
   { destruct i; destruct ts; simpl.
-    { rewrite avoid_refl.
-      apply FST_PAIR.
-    }
-    { rewrite avoid_refl.
-      simpl.
-      repeat rewrite subst_const.
-      eapply R_star.
-      { eapply app_red_l.
-        apply beta_red.
-      }
-      simpl.
-      rewrite avoid_refl.
-      repeat rewrite subst_const.
-      eapply R_star.
-      { eapply beta_red. }
-      simpl.
-      rewrite subst_weaken.
-      rewrite avoid_refl.
-      repeat rewrite subst_const.
+    { apply FST_PAIR. }
+    { normal_order.
       eapply star_trans.
-      { eapply app_reds_r.
+      { apply app_reds_r.
         apply SND_PAIR.
       }
       apply IHm.
     }
   }
-  Opaque cnum.
-  Transparent FST.
-  Transparent SND.
 Qed.
 
 Lemma tri_subst_reds {n} (T : Term n) :
@@ -201,7 +138,7 @@ Lemma tri_subst_reds {n} (T : Term n) :
 Proof.
   induction T.
   { unfold tri_subst; simpl.
-    rewrite avoid_refl.
+    normal_order.
     repeat rewrite subst_const.
     rewrite <- vlookup_Fins at 2.
     rewrite <- vlookup_vmap.
@@ -245,31 +182,14 @@ Qed.
 Lemma EVAL_WITHOUT_ENV_quote_Vars {n} (T : Term n) :
   reds (EVAL_WITHOUT_ENV # quote T # Vars n) T.
 Proof.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite avoid_refl.
-  repeat rewrite subst_const.
+  unfold EVAL_WITHOUT_ENV.
   unfold quote.
-  eapply R_star.
-  { do 3 apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  eapply R_star.
-  { do 2 apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
+  normal_order.
   repeat rewrite weaken_const.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
   apply tri_subst_reds.
 Qed.
+
+Opaque EVAL_WITHOUT_ENV.
 
 Definition EVAL : Term 0 :=
   Lam (EVAL_WITHOUT_ENV # var 0 # NIL).
@@ -278,11 +198,9 @@ Theorem EVAL_quote : forall (T : Term 0),
   reds (EVAL # quote T) T.
 Proof.
   intro T.
-  eapply R_star.
-  { apply beta_red. }
-  simpl.
-  simpl.
-  repeat rewrite subst_const.
+  unfold EVAL.
+  Opaque NIL.
+  normal_order.
   exact (EVAL_WITHOUT_ENV_quote_Vars T).
 Qed.
 

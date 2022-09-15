@@ -34,4 +34,23 @@ Proof.
   }
 Qed.
 
-Opaque cnum.
+Fixpoint iter_app {n} (M : Term n) (i : nat) (N : Term n) : Term n :=
+  match i with
+  | 0 => N
+  | S j => M # (iter_app M j N)
+  end.
+
+Lemma cnum_reds {n} (M N : Term n) : forall i,
+  reds (cnum i # M # N) (iter_app M i N).
+Proof.
+  unfold cnum; intro i.
+  normal_order.
+  induction i; simpl.
+  { normal_order. }
+  { normal_order.
+    rewrite subst_weaken.
+    apply app_reds_r.
+    apply IHi.
+  }
+Qed.
+

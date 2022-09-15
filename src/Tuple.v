@@ -49,31 +49,8 @@ Lemma FST_PAIR {n} : forall M N : Term n,
   reds (FST # (PAIR # M # N)) M.
 Proof.
   intros M N.
-  unfold FST.
-  eapply R_star.
-  { apply beta_red. }
-  simpl.
-  rewrite avoid_refl.
-  rewrite subst_const.
-  eapply R_star.
-  { apply app_red_l.
-    apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite avoid_refl.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite subst_weaken.
-  rewrite avoid_refl.
-  eapply R_star.
-  { apply beta_red. }
-  simpl.
-  rewrite avoid_refl.
-  repeat rewrite subst_weaken.
+  unfold FST, PAIR.
+  normal_order.
   apply TRUE_reds.
 Qed.
 
@@ -81,30 +58,8 @@ Lemma SND_PAIR {n} : forall M N : Term n,
   reds (SND # (PAIR # M # N)) N.
 Proof.
   intros M N.
-  eapply R_star.
-  { apply beta_red. }
-  simpl.
-  rewrite avoid_refl.
-  rewrite subst_const.
-  eapply R_star.
-  { apply app_red_l.
-    apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite avoid_refl.
-  eapply R_star.
-  { apply app_red_l.
-    apply beta_red.
-  }
-  simpl.
-  rewrite avoid_refl.
-  rewrite subst_weaken.
-  eapply R_star.
-  { apply beta_red. }
-  simpl.
-  rewrite avoid_refl.
-  repeat rewrite subst_weaken.
+  unfold SND, PAIR.
+  normal_order.
   apply FALSE_reds.
 Qed.
 
