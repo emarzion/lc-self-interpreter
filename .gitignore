@@ -1,12 +1,1 @@
-_opam/
-
-_CoqProject
-.Makefile.d
-Makefile
-Makefile.conf
-
-*.aux
-*.glob
-*.vo
-*.vok
-*.vos
+_build
