@@ -1,0 +1,7 @@
+(include_subdirs qualified)
+(rocq.theory
+  (name LC)
+  (package lambda_calc)
+  (synopsis "my lambda calculus interpreter")
+  (theories Stdlib)
+)
