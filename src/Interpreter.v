@@ -57,7 +57,44 @@ subst
         (inr (inl tt)) S_COMB) 
      (inl tt) FLIP_CURRY.
 
+Lemma tri_subst_app {n} (T1 T2 : Term n) {m} :
+  (tri_subst (T1 # T2) : Term m) = S_COMB # tri_subst T1 # tri_subst T2.
+Proof.
+  unfold tri_subst.
+  simpl quote_aux.
+  subst_simpl.
+  rewrite subst_const.
+  auto.
+Qed.
+
+Lemma tri_subst_var {n} (i : Fin n) {m} :
+  (tri_subst (Var i) : Term m) = LOOKUP # cnum (nat_of_Fin i).
+Proof.
+  unfold tri_subst.
+  simpl quote_aux.
+  subst_simpl.
+  repeat rewrite subst_const.
+  auto.
+Qed.
+
+Check Lam.
+
+Lemma tri_subst_lam {n} (T : Term (S n)) {m} :
+  (tri_subst (Lam T) : Term m) = FLIP_CURRY # tri_subst T.
+Proof.
+  unfold tri_subst.
+  simpl quote_aux.
+  subst_simpl.
+  auto.
+Qed.
+
 Opaque cnum.
+
+Lemma weaken_app {n} (T1 T2 : Term n) (i : Fin (S n)) :
+  weaken (T1 # T2) i = weaken T1 i # weaken T2 i.
+Proof.
+  auto.
+Qed.
 
 #[export]
 Instance tri_subst_Const {n} (T : Term n) :
@@ -65,21 +102,19 @@ Instance tri_subst_Const {n} (T : Term n) :
 Proof.
   constructor.
   intros m i.
-  unfold tri_subst.
   induction T.
-  - simpl.
-    rewrite avoid_refl.
-    repeat rewrite subst_const.
-    now repeat rewrite weaken_const.
-  - simpl.
-    rewrite avoid_refl.
-    repeat rewrite subst_const.
+  - repeat rewrite tri_subst_var.
+    rewrite weaken_app.
     repeat rewrite weaken_const.
-    now rewrite IHT1, IHT2.
-  - simpl.
-    rewrite avoid_refl.
-    repeat rewrite weaken_const.
-    now rewrite IHT.
+    auto.
+  - repeat rewrite tri_subst_app.
+    repeat rewrite weaken_app.
+    rewrite weaken_const.
+    congruence.
+  - repeat rewrite tri_subst_lam.
+    rewrite weaken_app.
+    rewrite weaken_const.
+    congruence.
 Qed.
 
 Lemma weaken_tup {n m} (ts : Vec (Term n) m) i :
@@ -115,6 +150,7 @@ Proof.
   Opaque FST.
   Opaque SND.
   normal_order.
+  subst_simpl.
   eapply star_trans.
   { apply app_reds_l.
     apply cnum_reds.
@@ -122,13 +158,20 @@ Proof.
   induction m.
   { destruct i. }
   { destruct i; destruct ts; simpl.
-    { apply FST_PAIR. }
+    { rewrite subst_const.
+      apply FST_PAIR. }
     { normal_order.
+      subst_simpl.
+      normal_order.
+      subst_simpl.
       eapply star_trans.
       { apply app_reds_r.
+        rewrite subst_const.
         apply SND_PAIR.
       }
-      apply IHm.
+      specialize (IHm v f).
+      rewrite subst_const in IHm.
+      auto.
     }
   }
 Qed.
@@ -137,16 +180,12 @@ Lemma tri_subst_reds {n} (T : Term n) :
   reds (tri_subst T # Vars n) T.
 Proof.
   induction T.
-  { unfold tri_subst; simpl.
-    normal_order.
-    repeat rewrite subst_const.
+  { rewrite tri_subst_var.
     rewrite <- vlookup_Fins at 2.
     rewrite <- vlookup_vmap.
     apply LOOKUP_reds.
   }
-  { unfold tri_subst; simpl.
-    rewrite avoid_refl.
-    repeat rewrite subst_const.
+  { rewrite tri_subst_app.
     eapply star_trans.
     { apply S_COMB_reds. }
     eapply star_trans.
@@ -157,8 +196,7 @@ Proof.
       exact IHT2.
     }
   }
-  { unfold tri_subst; simpl.
-    rewrite avoid_refl.
+  { rewrite tri_subst_lam.
     eapply star_trans.
     { apply FLIP_CURRY_reds. }
     apply lam_reds.
@@ -172,9 +210,7 @@ Proof.
     }
     rewrite H.
     clear H.
-    epose (weaken_const) as Hwc.
-    unfold tri_subst in Hwc.
-    rewrite Hwc.
+    rewrite weaken_const.
     exact IHT.
   }
 Qed.
@@ -185,7 +221,13 @@ Proof.
   unfold EVAL_WITHOUT_ENV.
   unfold quote.
   normal_order.
-  repeat rewrite weaken_const.
+  subst_simpl.
+  repeat rewrite subst_const.
+  normal_order.
+  subst_simpl.
+  normal_order.
+  subst_simpl.
+  normal_order.
   apply tri_subst_reds.
 Qed.
 

@@ -38,7 +38,17 @@ Lemma TRUE_reds {n} : forall M N : Term n,
 Proof.
   intros M N.
   unfold TRUE.
-  normal_order.
+  unfold reds.
+  eapply R_star.
+  - beta.
+  - rewrite subst_Lam.
+    unfold var.
+    rewrite subst_Var.
+    rewrite avoid_refl.
+    eapply R_star.
+    + beta.
+    + rewrite subst_weaken.
+      constructor.
 Qed.
 
 Lemma FALSE_reds {n} : forall M N : Term n,
@@ -46,7 +56,18 @@ Lemma FALSE_reds {n} : forall M N : Term n,
 Proof.
   intros M N.
   unfold FALSE.
-  normal_order.
+  unfold reds.
+  eapply R_star.
+  - beta.
+  - rewrite subst_Lam.
+    unfold var.
+    rewrite @subst_Var.
+    simpl avoid; cbv iota.
+    eapply R_star.
+    + beta.
+    + rewrite @subst_Var.
+      rewrite avoid_refl.
+      constructor.
 Qed.
 
 #[global]
