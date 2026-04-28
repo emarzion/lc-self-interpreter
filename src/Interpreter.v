@@ -49,6 +49,53 @@ Proof.
   constructor; reflexivity.
 Qed.
 
+Lemma quote_aux_var {m n} (i : Fin n) :
+  (quote_aux (Var i) : Term (S (S (S m)))) = var 2 # cnum (nat_of_Fin i).
+Proof.
+  auto.
+Qed.
+
+Lemma weaken_app {n} (T1 T2 : Term n) (i : Fin (S n)) :
+  weaken (T1 # T2) i = weaken T1 i # weaken T2 i.
+Proof.
+  auto.
+Qed.
+
+#[export]
+Instance quote_Const {n} (T : Term n) : Const (fun m => @quote m n T).
+Proof.
+  constructor.
+  intros m i.
+  unfold quote; simpl.
+  repeat f_equal.
+  generalize i; clear i.
+  induction T; intro i.
+  - repeat rewrite quote_aux_var.
+    rewrite weaken_app.
+    rewrite weaken_const; auto.
+  - simpl quote_aux.
+    repeat rewrite weaken_app.
+    rewrite IHT1, IHT2.
+    auto.
+  - simpl quote_aux.
+    rewrite weaken_app.
+    rewrite IHT.
+    auto.
+Qed.
+
+Lemma weaken_quote {m n} (T : Term n) (i : Fin (S m)) :
+  weaken (quote T) i = quote T.
+Proof.
+  destruct (quote_Const T).
+  apply weaken_const.
+Qed.
+
+Lemma subst_quote {m n} (T : Term n) (U : Term m) (i : Fin (S m)) :
+  subst (quote T) i U = quote T.
+Proof.
+  apply (@subst_const _ (quote_Const T)).
+Qed.
+
 Definition tri_subst {n} (T : Term n) {m} : Term m :=
 subst
      (subst
@@ -89,12 +136,6 @@ Proof.
 Qed.
 
 Opaque cnum.
-
-Lemma weaken_app {n} (T1 T2 : Term n) (i : Fin (S n)) :
-  weaken (T1 # T2) i = weaken T1 i # weaken T2 i.
-Proof.
-  auto.
-Qed.
 
 #[export]
 Instance tri_subst_Const {n} (T : Term n) :
@@ -236,6 +277,9 @@ Opaque EVAL_WITHOUT_ENV.
 Definition EVAL : Term 0 :=
   Lam (EVAL_WITHOUT_ENV # var 0 # NIL).
 
+Print EVAL.
+Eval vm_compute in EVAL.
+
 Theorem EVAL_quote : forall (T : Term 0),
   reds (EVAL # quote T) T.
 Proof.
@@ -252,3 +296,17 @@ Definition EVAL_Interpreter : Interpretation := {|
   E := EVAL;
   E_q := EVAL_quote
   |}.
+
+Require Import String.
+
+From Coq Require Import Numbers.DecimalString Numbers.DecimalNat.
+
+Definition nat_to_string (n : nat) : string :=
+  NilZero.string_of_uint (Decimal.rev (Unsigned.to_lu n)).
+
+Fixpoint print_term {n} (T : Term n) : string :=
+  match T with
+  | Var i => nat_to_string (nat_of_Fin i)
+  | T1 # T2 => "(" ++ print_term T1 ++ " " ++ print_term T2 ++ ")"
+  | Lam T' => "(λ" ++ print_term T' ++ ")"
+  end.
