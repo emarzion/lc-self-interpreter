@@ -1,0 +1,22 @@
+(rocq.extraction
+  (prelude ExtractQuine)
+  (extracted_modules QuineCode)
+  (theories Stdlib LC))
+
+(library
+  (name extracted_code)
+  (modules
+    QuineCode
+  ))
+
+(env
+  (dev
+    (flags (:standard -w -39 -w -33 -w -20))
+    (ocamlopt_flags (:standard -O3)))
+  (release
+    (ocamlopt_flags (:standard -O3))))
+
+(executable
+  (name main)
+  (modules Main)
+  (libraries extracted_code))

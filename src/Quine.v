@@ -350,8 +350,96 @@ Proof.
   - apply I_reds.
 Qed.
 
-Set Printing Depth 1000000.
-Require Import String.
+CoInductive delay X : Type :=
+  | tick : delay X -> delay X
+  | boom : X -> delay X.
 
-Eval vm_compute in Quine.
-Eval vm_compute in print_term Quine.
+Arguments tick {_} _.
+Arguments boom {_} _.
+
+CoFixpoint unfold_option {X} (x : X) (f : X -> option X) : delay X :=
+  match f x with
+  | Some y => tick (unfold_option y f)
+  | None => boom x
+  end.
+
+Definition lam_body {m} (T : Term m) : option (Term (S m)) :=
+  match T with
+  | Lam T' => Some T'
+  | _ => None
+  end.
+
+Fixpoint normal_step {m} (T : Term m) : option (Term m) :=
+  match T with
+  | Var _ => None
+  | T1 # T2 =>
+    match lam_body T1 with
+    | Some T1' => Some (subst T1' (inl tt) T2)
+    | None =>
+      match normal_step T1 with
+      | Some U1 => Some (U1 # T2)
+      | None => option_map (App T1) (normal_step T2)
+      end
+    end
+  | Lam T' => option_map Lam (normal_step T')
+  end.
+
+Lemma lam_body_None_not_lam {m} (T : Term m) :
+  lam_body T = None -> not_lam T.
+Proof.
+  intro pf; destruct T; simpl; auto; discriminate.
+Qed.
+
+Lemma lam_body_Some {m} (T : Term m) (T' : Term (S m)) :
+  lam_body T = Some T' -> T = Lam T'.
+Proof.
+  intro pf.
+  unfold lam_body in pf.
+  destruct T; try discriminate.
+  now inversion pf.
+Qed.
+
+Lemma normal_step_None_correct {m} (T : Term m) :
+  normal_step T = None -> normal T.
+Proof.
+  induction T; intro pf.
+  - simpl; auto.
+  - simpl in *.
+    destruct (lam_body T1) eqn:Hlam.
+    + discriminate.
+    + destruct (normal_step T1); [discriminate|].
+      destruct (normal_step T2); [discriminate|].
+      split; auto.
+      apply lam_body_None_not_lam; auto.
+  - simpl; apply IHT.
+    simpl in pf.
+    destruct (normal_step T); auto; discriminate.
+Qed.
+
+Lemma normal_step_Some_correct {m} (T T' : Term m) :
+  normal_step T = Some T' -> red T T'.
+Proof.
+  induction T; intro pf.
+  - discriminate.
+  - simpl in pf.
+    destruct (lam_body T1) as [T1'|] eqn:Hlam.
+    + inversion pf.
+      apply lam_body_Some in Hlam; subst.
+      apply beta_red.
+    + destruct (normal_step T1) as [U1|].
+      * inversion pf.
+        apply app_red_l.
+        apply IHT1; auto.
+      * destruct (normal_step T2) as [U2|]; [|discriminate].
+        inversion pf; subst.
+        apply app_red_r.
+        apply IHT2; auto.
+  - simpl in pf.
+    destruct (normal_step T) as [U|]; [|discriminate].
+    inversion pf.
+    apply lam_red.
+    apply IHT; auto.
+Qed.
+
+Definition normalize {m} (T : Term m) : delay (Term m) :=
+  unfold_option T normal_step.
