@@ -13,7 +13,7 @@ Definition S_COMB_reds {n} (M N P : Term n) :
   reds (S_COMB # M # N # P) (M # P # (N # P)).
 Proof.
   unfold S_COMB.
-  normal_order.
+  normal_order2.
 Qed.
 
 #[export]
@@ -41,7 +41,7 @@ Lemma FLIP_CURRY_reds {n} (F E : Term n ) :
          # weaken E (inl tt)))).
 Proof.
   unfold FLIP_CURRY.
-  normal_order.
+  normal_order2.
 Qed.
 
 #[global]

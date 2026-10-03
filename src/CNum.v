@@ -44,13 +44,26 @@ Lemma cnum_reds {n} (M N : Term n) : forall i,
   reds (cnum i # M # N) (iter_app M i N).
 Proof.
   unfold cnum; intro i.
-  normal_order.
-  induction i; simpl.
-  { normal_order. }
-  { normal_order.
-    rewrite subst_weaken.
-    apply app_reds_r.
-    apply IHi.
-  }
+  eapply R_star.
+  - apply app_red_l.
+    apply beta_red.
+  - rewrite subst_Lam.
+    eapply R_star.
+    + apply beta_red.
+    + induction i.
+      * simpl cnum_aux.
+        rewrite subst_Var.
+        simpl avoid. cbv iota.
+        rewrite subst_Var.
+        rewrite avoid_refl.
+        simpl.
+        constructor.
+      * simpl.
+        rewrite subst_App.
+        rewrite subst_Var.
+        rewrite avoid_refl.
+        rewrite subst_App.
+        rewrite subst_weaken.
+        apply app_reds_r.
+        exact IHi.
 Qed.
-

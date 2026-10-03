@@ -1,3 +1,5 @@
+Require Import Lia.
+
 Require Import LC.Util.Fin.
 Require Import LC.Util.Vec.
 Require Import LC.Util.Star.
@@ -45,22 +47,34 @@ Proof.
   constructor; reflexivity.
 Qed.
 
+
 Lemma FST_PAIR {n} : forall M N : Term n,
   reds (FST # (PAIR # M # N)) M.
 Proof.
   intros M N.
   unfold FST, PAIR.
-  normal_order.
+  normal_order2.
   apply TRUE_reds.
 Qed.
+
+Print Assumptions FST_PAIR.
 
 Lemma SND_PAIR {n} : forall M N : Term n,
   reds (SND # (PAIR # M # N)) N.
 Proof.
   intros M N.
-  unfold SND, PAIR.
-  normal_order.
-  apply FALSE_reds.
+  unfold FST, PAIR.
+  eapply R_star.
+  - apply beta_red.
+  - subst_simpl.
+    rewrite subst_const.
+    eapply R_star; [beta|].
+    subst_simpl.
+    eapply R_star; [beta|].
+    subst_simpl.
+    eapply R_star; [beta|].
+    subst_simpl.
+    apply FALSE_reds.
 Qed.
 
 #[export]
